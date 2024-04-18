@@ -77,6 +77,9 @@ def main():
 
     player = Player(100, 100, 50, 50)
 
+    pygame.mixer.music.load("Pawprint_Panic!.mp3")
+    pygame.mixer.music.play(-1)  # -1 means loop indefinitely
+
     run = True 
     while run:
         clock.tick(FPS)
