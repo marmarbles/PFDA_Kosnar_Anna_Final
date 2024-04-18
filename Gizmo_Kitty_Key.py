@@ -4,6 +4,7 @@ import math
 import pygame
 from os import listdir
 from os.path import isfile, join
+
 pygame.init()
 
 pygame.display.set_caption("Gizmo's Kitty Key Adventure!")
@@ -18,7 +19,7 @@ def flip(sprites):
     return [pygame.transform.flip(sprite, True, False) for sprite in sprites]
 
 def load_sprite_sheets(dir1, dir2,  frames, direction=False):
-    path = join(dir1, dir2)  # Corrected path joining
+    path = join(dir1, dir2)
     images = [f for f in listdir(path) if isfile(join(path, f))]
 
     all_sprites = {}
@@ -47,10 +48,10 @@ def load_sprite_sheets(dir1, dir2,  frames, direction=False):
 class Player(pygame.sprite.Sprite):
     COLOR = (255, 0, 0)
     GRAVITY = 1
-    ANIMATION_DELAY = 5
+    ANIMATION_DELAY = 5 
 
     def __init__(self, x, y, width, height):
-        self.sprite = None
+        super().__init__()
         self.rect = pygame.Rect(x, y, width, height)
         self.x_vel = 0
         self.y_vel = 0
@@ -75,7 +76,6 @@ class Player(pygame.sprite.Sprite):
         if self.direction != "right":
             self.direction = "right"
             self.animation_count = 0
-
 
     def update_sprite(self):
         sprite_sheet = "idle"
