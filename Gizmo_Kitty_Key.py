@@ -178,7 +178,7 @@ def main():
     block_size = 96
 
     player = Player(100, 100, 40, 31)
-    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(WIDTH // block_size)]
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(WIDTH // block_size + 1)]
 
     pygame.mixer.music.load("Pawprint_Panic!.mp3")
     pygame.mixer.music.play(-1)  # -1 means loop indefinitely
