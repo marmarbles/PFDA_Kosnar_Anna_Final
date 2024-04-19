@@ -4,20 +4,23 @@ import math
 import pygame
 from os import listdir
 from os.path import isfile, join
+
 pygame.init()
 
 pygame.display.set_caption("Gizmo's Kitty Key Adventure!")
 
-WIDTH, HEIGHT = 700 , 500 
-FPS = 45 
+WIDTH, HEIGHT = 1000, 800
+FPS = 45
 PLAYER_VEL = 5
 
 window = pygame.display.set_mode((WIDTH, HEIGHT))
 
+
 def flip(sprites):
     return [pygame.transform.flip(sprite, True, False) for sprite in sprites]
 
-def load_sprite_sheets(dir1, dir2,  frames, direction=False):
+
+def load_sprite_sheets(dir1, dir2, frames, direction=False):
     path = join(dir1, dir2)  # Corrected path joining
     images = [f for f in listdir(path) if isfile(join(path, f))]
 
@@ -36,28 +39,30 @@ def load_sprite_sheets(dir1, dir2,  frames, direction=False):
             sprites.append(pygame.transform.scale2x(surface))
 
         if direction:
-            all_sprites[image.replace(".png", "_left")] = sprites  # Set the key as "Idle_left"
-            all_sprites[image.replace(".png", "_right")] = flip(sprites)  # Set the key as "Idle_right"
+            all_sprites[image.replace(".png", "_left")] = sprites
+            all_sprites[image.replace(".png", "_right")] = flip(sprites)
         else:
-            all_sprites[image.replace(".png", "")] = sprites  # Set the key as the image filename without ".png"
+            all_sprites[image.replace(".png", "")] = sprites
 
     return all_sprites
 
+
 def get_block(size):
-    path = join("Terrain","Terrain.png")
+    path = join("Terrain", "Terrain.png")
     image = pygame.image.load(path).convert_alpha()
     surface = pygame.Surface((size, size), pygame.SRCALPHA, 32)
     rect = pygame.Rect(96, 0, size, size)
     surface.blit(image, (0, 0), rect)
     return pygame.transform.scale2x(surface)
 
+
 class Player(pygame.sprite.Sprite):
     COLOR = (255, 0, 0)
     GRAVITY = 1
-    ANIMATION_DELAY = 5 
+    ANIMATION_DELAY = 5
 
     def __init__(self, x, y, width, height):
-        super().__init__() 
+        super().__init__()
         self.sprite = None
         self.rect = pygame.Rect(x, y, width, height)
         self.x_vel = 0
@@ -84,31 +89,27 @@ class Player(pygame.sprite.Sprite):
             self.direction = "right"
             self.animation_count = 0
 
-
     def update_sprite(self):
         sprite_sheet = "idle"
         if self.x_vel != 0:
             sprite_sheet = "run"
 
-        sprite_sheet_name = sprite_sheet.capitalize() + "_" + self.direction  # Capitalize sprite_sheet
+        sprite_sheet_name = sprite_sheet.capitalize() + "_" + self.direction
         sprites = self.SPRITES[sprite_sheet_name]
         sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
         self.sprite = sprites[sprite_index]
         self.animation_count += 1
 
     def loop(self, fps):
-        # self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY)
         self.move(self.x_vel, self.y_vel)
 
         self.fall_count += 1
         self.update_sprite()
 
     def update(self):
-        self.rect = self.sprite.get_rect(topLeft=(self.rect.x, self.rect.y))
+        self.rect = self.sprite.get_rect(topleft=(self.rect.x, self.rect.y))
         self.mask = pygame.mask.from_surface(self.sprite)
         self.update()
-
-
 
     def draw(self, win):
         win.blit(self.sprite, (self.rect.x, self.rect.y))
@@ -116,16 +117,15 @@ class Player(pygame.sprite.Sprite):
 
 class Object(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, name=None):
-        super().__init__() 
+        super().__init__()
         self.rect = pygame.Rect(x, y, width, height)
         self.image = pygame.Surface((width, height), pygame.SRCALPHA)
-        self.width = width 
-        self.height = height 
-        self.name = name 
+        self.width = width
+        self.height = height
+        self.name = name
 
     def draw(self, win):
         win.blit(self.image, (self.rect.x, self.rect.y))
-
 
 
 class Block(Object):
@@ -135,7 +135,8 @@ class Block(Object):
         self.image.blit(block, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
 
-def get_Background(name):
+
+def get_background(name):
     image = pygame.image.load(join("Background", name))
     _, _, width, height = image.get_rect()
     tiles = []
@@ -147,12 +148,13 @@ def get_Background(name):
 
     return tiles, image
 
+
 def draw(window, background, bg_image, player, objects):
     for tile in background:
         window.blit(bg_image, tile)
 
     for obj in objects:
-        obj.draw(window) 
+        obj.draw(window)
 
     player.draw(window)
 
@@ -171,12 +173,12 @@ def handle_move(player):
 
 def main():
     clock = pygame.time.Clock()
-    background, bg_image = get_Background("PFDA_Background.png")
+    background, bg_image = get_background("PFDA_Background.png")
 
     block_size = 96
 
     player = Player(100, 100, 40, 31)
-    blocks = [Block(0, HEIGHT - block_size, block_size)]
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(WIDTH // block_size)]
 
     pygame.mixer.music.load("Pawprint_Panic!.mp3")
     pygame.mixer.music.play(-1)  # -1 means loop indefinitely
@@ -192,10 +194,11 @@ def main():
 
         player.loop(FPS)
         handle_move(player)
-        draw(window, background, bg_image, player, blocks)
+        draw(window, background, bg_image, player, floor)
 
     pygame.quit()
     quit()
+
 
 if __name__ == "__main__":
     main()
