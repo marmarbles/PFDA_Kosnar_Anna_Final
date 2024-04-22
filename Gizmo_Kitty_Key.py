@@ -72,6 +72,14 @@ class Player(pygame.sprite.Sprite):
         self.animation_count = 0
         self.fall_count = 0
         self.SPRITES = load_sprite_sheets("Sprites", "", 6, True)
+        self.jump_count = 0
+
+    def jump(self):
+        self.y_vel = -self.GRAVITY * 8 
+        self.animation_count = 0 
+        self.jump_count = 1 
+        if self.jump_count == 1:
+            self.fall_count = 0 
 
     def move(self, dx, dy):
         self.rect.x += dx
@@ -186,7 +194,7 @@ def handle_vertical_collision(player, objects, dy):
    
     return collided_objects 
 
-
+ 
 
 def handle_move(player, objects):
     keys = pygame.key.get_pressed()
@@ -220,6 +228,10 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
                 break
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and player.jump_count < 2:
+                    player.jump()
 
         player.loop(FPS)
         handle_move(player, floor)
