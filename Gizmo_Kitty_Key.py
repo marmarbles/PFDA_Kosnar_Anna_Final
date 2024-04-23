@@ -20,13 +20,14 @@ def flip(sprites):
     return [pygame.transform.flip(sprite, True, False) for sprite in sprites]
 
 
-def load_sprite_sheets(dir1, dir2, frames, direction=False):
+def load_sprite_sheets(dir1, dir2, direction=False):
     path = join(dir1, dir2)  # Corrected path joining
     images = [f for f in listdir(path) if isfile(join(path, f))]
 
     all_sprites = {}
 
     for image in images:
+        frames = int(image[0])
         sprite_sheet = pygame.image.load(join(path, image)).convert_alpha()
         width = sprite_sheet.get_width() // frames
         height = sprite_sheet.get_height()
@@ -38,6 +39,7 @@ def load_sprite_sheets(dir1, dir2, frames, direction=False):
             surface.blit(sprite_sheet, (0, 0), rect)
             sprites.append(pygame.transform.scale2x(surface))
 
+        image = image[1:]
         if direction:
             all_sprites[image.replace(".png", "_left")] = sprites
             all_sprites[image.replace(".png", "_right")] = flip(sprites)
@@ -71,11 +73,14 @@ class Player(pygame.sprite.Sprite):
         self.direction = "left"
         self.animation_count = 0
         self.fall_count = 0
-        self.SPRITES = load_sprite_sheets("Sprites", "", 6, True)
+        self.SPRITES = load_sprite_sheets("Sprites", "",  True)
         self.jump_count = 0
+        self.onFloor = False
+        self.corrected = False
 
     def jump(self):
-        self.y_vel = -self.GRAVITY * 8 
+        self.rect.y -= self.rect.h
+        self.y_vel = -self.GRAVITY * 8
         self.animation_count = 0 
         self.jump_count = 1 
         if self.jump_count == 1:
@@ -84,6 +89,9 @@ class Player(pygame.sprite.Sprite):
     def move(self, dx, dy):
         self.rect.x += dx
         self.rect.y += dy
+        if (self.rect.y > 700):
+            self.rect.y = 673
+            self.y_vel = 0
 
     def move_left(self, vel):
         self.x_vel = -vel
@@ -101,6 +109,7 @@ class Player(pygame.sprite.Sprite):
         self.fall_count = 0 
         self.y_vel = 0 
         self.jump_count = 0 
+        self.onFloor = True
 
     def hit_head(self):
         self.count = 0 
@@ -110,6 +119,8 @@ class Player(pygame.sprite.Sprite):
         sprite_sheet = "idle"
         if self.x_vel != 0:
             sprite_sheet = "run"
+        if self.y_vel <= -0.5:
+            sprite_sheet = "jump"
 
         sprite_sheet_name = sprite_sheet.capitalize() + "_" + self.direction
         sprites = self.SPRITES[sprite_sheet_name]
@@ -119,8 +130,13 @@ class Player(pygame.sprite.Sprite):
         self.animation_count += 1
 
     def loop(self, fps):
-        self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY)
+        if not self.onFloor:
+            self.y_vel += (self.fall_count / fps) * self.GRAVITY
+            self.corrected = False
         self.move(self.x_vel, self.y_vel)
+        if self.onFloor and not self.corrected:
+            self.rect.y -= self.rect.h
+            self.corrected = True
 
         self.fall_count += 1
         self.update_sprite()
@@ -186,9 +202,9 @@ def handle_vertical_collision(player, objects, dy):
             if dy > 0:
                 player.rect.bottom = obj.rect.top
                 player.landed()
-            elif dy < 0:
-                player.rect.top = obj.rect.bottom 
-                player.hithead()
+            # elif dy < 0:
+            #     player.rect.top = obj.rect.bottom 
+            #     player.hit_head()
 
         collided_objects.append(obj)
    
@@ -204,6 +220,9 @@ def handle_move(player, objects):
         player.move_left(PLAYER_VEL)
     if keys[pygame.K_d]:
         player.move_right(PLAYER_VEL)
+    if keys[pygame.K_SPACE] and player.onFloor:
+        player.onFloor = False
+        player.jump()
 
     handle_vertical_collision(player, objects, player.y_vel)
 
@@ -229,9 +248,9 @@ def main():
                 run = False
                 break
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and player.jump_count < 2:
-                    player.jump()
+        # if event.type == pygame.KEYDOWN:
+        #     if event.key == pygame.K_SPACE and player.jump_count < 2:
+        #             player.jump()
 
         player.loop(FPS)
         handle_move(player, floor)
